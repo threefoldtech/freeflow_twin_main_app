@@ -21,6 +21,7 @@ class Globals {
   static final HexColor color = HexColor("#0a73b8");
 
   String routeName = 'Home';
+  bool clearWebViewCache = false;
 
   ValueNotifier<bool> hidePhoneButton = ValueNotifier(false);
 

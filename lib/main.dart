@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,8 @@ import 'package:freeflow/globals/globals.dart';
 import 'package:freeflow/helpers/shared_preference_data.dart';
 import 'package:freeflow/screens/webview_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'helpers/api_helpers.dart';
+import 'helpers/globals.dart';
 import 'screens/enter_username_screen.dart';
 import 'firebase_options.dart';
 
@@ -40,16 +44,14 @@ void main() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@drawable/ic_launcher_notification');
 
+  const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+  );
 
-const DarwinInitializationSettings initializationSettingsIOS =
-    DarwinInitializationSettings(
-  requestAlertPermission: true,
-  requestBadgePermission: true,
-  requestSoundPermission: true,
-);
-
-
-  final InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+  final InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings,
       onDidReceiveNotificationResponse: foregroundClick, onDidReceiveBackgroundNotificationResponse: backgroundClick);
@@ -64,8 +66,30 @@ const DarwinInitializationSettings initializationSettingsIOS =
     sound: true,
   );
 
+
+  // When the app is terminated
   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-    print('INITIALZE MESSAGE');
+    if (message?.data == null) return;
+
+    new Future.delayed(const Duration(milliseconds: 500), () async {
+      String username = await getNameInStorage();
+
+      String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
+
+      String? target = message?.data['sender'];
+      print('This is the target: ');
+      print(target);
+
+      String messageUrl = rootUrl + '/whisper/$target';
+      Uri newUrl = Uri.parse(messageUrl);
+
+      URLRequest r = new URLRequest(url: newUrl);
+
+      print("Redirecting to: ");
+      print(messageUrl);
+
+      await webView.loadUrl(urlRequest: r);
+    });
   });
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -87,32 +111,46 @@ const DarwinInitializationSettings initializationSettingsIOS =
               // icon: '@drawable/ic_launcher_notification',
               // styleInformation:
             ),
-          ));
+          ), payload: jsonEncode(message.data));
     }
   });
 
   String? identifier = await FirebaseMessaging.instance.getToken();
 
-  print("THIS IS THE IDENTIFIER");
-  print(await FirebaseMessaging.instance.getAPNSToken());
-
   if (identifier == null || identifier == '') identifier = '';
   await setIdentifierInStorage(identifier);
 
+
+  String versionStored = await getFreeFlowVersionInStorage();
+  String liveVersion =  await getCurrentFreeFlowVersion();
+
+  print("CURRENT VERSION: $liveVersion");
+  print("STORED VERSION: $versionStored");
+
+  if(versionStored != liveVersion) {
+    Globals().clearWebViewCache = true;
+    await setFreeFlowVersionInStorage(liveVersion);
+  }
+
   runApp(LandingScreen());
 }
+
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
 }
 
+// When the app is in the foreground
 Future<void> foregroundClick(NotificationResponse message) async {
+  print('Foreground notification clicked');
+
   String username = await getNameInStorage();
 
   String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
-  print(rootUrl);
 
-  String messageUrl = rootUrl + '/whisper';
+  dynamic target = jsonDecode(message.payload!)['sender'];
+
+  String messageUrl = rootUrl + '/whisper/$target';
   Uri newUrl = Uri.parse(messageUrl);
 
   URLRequest r = new URLRequest(url: newUrl);
@@ -120,30 +158,32 @@ Future<void> foregroundClick(NotificationResponse message) async {
   await webView.loadUrl(urlRequest: r);
 }
 
+// When the app is in the background
 Future<void> backgroundClick(NotificationResponse message) async {
-  print('COMING HERE');
+  print('Background notification clicked');
 
-  String username = await getNameInStorage();
+  new Future.delayed(const Duration(milliseconds: 500), () async {
+    String username = await getNameInStorage();
 
-  String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
-  print(rootUrl);
+    String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
 
-  String messageUrl = rootUrl + '/whisper';
-  Uri newUrl = Uri.parse(messageUrl);
+    dynamic target = jsonDecode(message.payload!)['sender'];
 
-  URLRequest r = new URLRequest(url: newUrl);
+    String messageUrl = rootUrl + '/whisper/$target';
+    Uri newUrl = Uri.parse(messageUrl);
 
-  new Future.delayed(const Duration(milliseconds: 5000), () async {
+    URLRequest r = new URLRequest(url: newUrl);
+
     await webView.loadUrl(urlRequest: r);
   });
 }
 
-class LandingScreen extends StatefulWidget with WidgetsBindingObserver {
+class LandingScreen extends StatefulWidget {
   @override
   _LandingScreenState createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> {
+class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserver {
   String username = '';
 
   @override

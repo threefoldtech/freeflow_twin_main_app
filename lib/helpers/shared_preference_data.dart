@@ -17,7 +17,22 @@ Future<void> setNameInStorage(String username) async {
   await prefs.setString('name', username);
 }
 
+Future<String> getFreeFlowVersionInStorage() async {
+  final prefs = await SharedPreferences.getInstance();
 
+  String? version = prefs.getString('freeflow-version');
+
+  if (version == null) {
+    return '';
+  }
+
+  return version;
+}
+
+Future<void> setFreeFlowVersionInStorage(String version) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('freeflow-version', version);
+}
 
 Future<void> setIdentifierInStorage(String identifier) async {
   final prefs = await SharedPreferences.getInstance();

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:freeflow/app_config.dart';
+import 'package:freeflow/helpers/globals.dart';
 import 'package:freeflow/helpers/shared_preference_data.dart';
 import 'package:freeflow/screens/enter_username_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -114,15 +115,18 @@ class _WebViewScreenState extends State<WebViewScreen> {
                     initialUrlRequest: URLRequest(url: Uri.parse(widget.url)),
                     initialOptions: InAppWebViewGroupOptions(
                         crossPlatform: InAppWebViewOptions(
+                          clearCache:  Globals().clearWebViewCache,
                           useShouldOverrideUrlLoading: true,
                         ),
                         android: AndroidInAppWebViewOptions(
                             supportMultipleWindows: true, thirdPartyCookiesEnabled: true, useHybridComposition: true),
-                        ios: IOSInAppWebViewOptions()),
+                        ios: IOSInAppWebViewOptions(disallowOverScroll: true)),
                     onWebViewCreated: (InAppWebViewController controller) async {
                       webView = controller;
                       setState(() {});
                       addWebViewHandlers();
+
+                      Globals().clearWebViewCache = false;
                     },
                     onConsoleMessage: (InAppWebViewController controller, ConsoleMessage consoleMessage) {
                       print("FreeFlow console: " + consoleMessage.message);

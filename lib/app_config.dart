@@ -27,12 +27,17 @@ class AppConfig extends EnvConfig {
 
 abstract class AppConfigImpl {
   String deepLink();
+  String spawnerUrl();
   String freeFlowUrl();
 }
 
 class AppConfigProduction extends AppConfigImpl {
   String deepLink() {
     return "threebot://";
+  }
+
+  String spawnerUrl() {
+    return 'https://demo.freeflow.life';
   }
 
   String freeFlowUrl() {
@@ -46,6 +51,10 @@ class AppConfigStaging extends AppConfigImpl {
     return "threebot://";
   }
 
+  String spawnerUrl() {
+    return 'https://digitaltwin-test.jimbertesting.be';
+  }
+
   String freeFlowUrl() {
     return '.digitaltwin-test.jimbertesting.be';
   }
@@ -54,6 +63,10 @@ class AppConfigStaging extends AppConfigImpl {
 class AppConfigTesting extends AppConfigImpl {
   String deepLink() {
     return "threebot://";
+  }
+
+  String spawnerUrl() {
+    return 'https://digitaltwin-test.jimbertesting.be';
   }
 
   String freeFlowUrl() {
