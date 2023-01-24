@@ -111,7 +111,8 @@ void main() async {
               // icon: '@drawable/ic_launcher_notification',
               // styleInformation:
             ),
-          ), payload: jsonEncode(message.data));
+          ),
+          payload: jsonEncode(message.data));
     }
   });
 
@@ -120,21 +121,19 @@ void main() async {
   if (identifier == null || identifier == '') identifier = '';
   await setIdentifierInStorage(identifier);
 
-
   String versionStored = await getFreeFlowVersionInStorage();
-  String liveVersion =  await getCurrentFreeFlowVersion();
+  String liveVersion = await getCurrentFreeFlowVersion();
 
   print("CURRENT VERSION: $liveVersion");
   print("STORED VERSION: $versionStored");
 
-  if(versionStored != liveVersion) {
+  if (versionStored != liveVersion) {
     Globals().clearWebViewCache = true;
     await setFreeFlowVersionInStorage(liveVersion);
   }
 
   runApp(LandingScreen());
 }
-
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
@@ -186,13 +185,49 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserver {
   String username = '';
 
+  AppLifecycleState? _notification;
+
+  Uri? lastUrl;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.paused) {
+      Uri? currentUrl = await webView.getUrl();
+      setState(() {
+        lastUrl = currentUrl;
+      });
+
+      String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
+      Uri newUrl = Uri.parse(rootUrl);
+
+      URLRequest r = new URLRequest(url: newUrl);
+
+      await webView.loadUrl(urlRequest: r);
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      if (lastUrl != null) {
+        URLRequest r = new URLRequest(url: lastUrl);
+
+        await webView.loadUrl(urlRequest: r);
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getUsername();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance?.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> getUsername() async {

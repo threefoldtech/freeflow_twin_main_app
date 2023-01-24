@@ -26,10 +26,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
         appBar: AppBar(
           systemOverlayStyle: SystemUiOverlayStyle(
             statusBarColor: HexColor('#dacfc7'), // <-- SEE HERE
-            statusBarIconBrightness:
-                Brightness.dark, //<-- For Android SEE HERE (dark icons)
-            statusBarBrightness:
-                Brightness.light, //<-- For iOS SEE HERE (dark icons)
+            statusBarIconBrightness: Brightness.dark, //<-- For Android SEE HERE (dark icons)
+            statusBarBrightness: Brightness.light, //<-- For iOS SEE HERE (dark icons)
           ),
           centerTitle: true,
           iconTheme: IconThemeData(
@@ -69,18 +67,17 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                           ),
                           Text(
                             "FREEFLOW EXPERIENCE",
-                            style: TextStyle(
-                                fontSize: 18,
-                                color: HexColor('#2c3e50'),
-                                fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 18, color: HexColor('#2c3e50'), fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 15),
-                          Text(
-                              "Please enter your environment url in order to continue.",
-                              style: TextStyle(
-                                color: HexColor('#2c3e50'),
-                              ),
-                              textAlign: TextAlign.center),
+                          Container(
+                            padding: EdgeInsets.only(left: 4, right: 4),
+                            child: Text("Please enter your environment url in order to continue.",
+                                style: TextStyle(
+                                  color: HexColor('#2c3e50'),
+                                ),
+                                textAlign: TextAlign.center),
+                          ), SizedBox(height: 5,)
                         ],
                       ),
                     ),
@@ -97,7 +94,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                                   controller: environmentController,
                                   decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
-                                    isDense: true, // Added this
+                                    isDense: true,
+                                    // Added this
                                     contentPadding: EdgeInsets.all(12),
                                     filled: true,
                                     fillColor: Color.fromRGBO(227, 219, 213, 1),
@@ -112,21 +110,14 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                                     await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => WebViewScreen(
-                                                url: 'https://' + replaced)));
+                                            builder: (context) => WebViewScreen(url: 'https://' + replaced)));
                                   },
                                   style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all(
-                                        HexColor('#66c9bf')),
-                                    padding:
-                                        MaterialStateProperty.all<EdgeInsets>(
-                                            EdgeInsets.only(top: 5, bottom: 5)),
-                                    minimumSize:
-                                        MaterialStateProperty.all<Size>(
-                                            Size(300, 34.0)),
+                                    backgroundColor: MaterialStateProperty.all(HexColor('#66c9bf')),
+                                    padding: MaterialStateProperty.all<EdgeInsets>(EdgeInsets.only(top: 5, bottom: 5)),
+                                    minimumSize: MaterialStateProperty.all<Size>(Size(300, 34.0)),
                                   ),
-                                  child: const Text('GO!',
-                                      style: TextStyle(color: Colors.white)),
+                                  child: const Text('GO!', style: TextStyle(color: Colors.white)),
                                 ),
                               ],
                             ),
