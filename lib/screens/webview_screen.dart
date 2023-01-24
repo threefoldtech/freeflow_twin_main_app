@@ -115,18 +115,27 @@ class _WebViewScreenState extends State<WebViewScreen> {
                     initialUrlRequest: URLRequest(url: Uri.parse(widget.url)),
                     initialOptions: InAppWebViewGroupOptions(
                         crossPlatform: InAppWebViewOptions(
-                          clearCache:  Globals().clearWebViewCache,
+                          mediaPlaybackRequiresUserGesture: false,
+                          clearCache: Globals().clearWebViewCache,
                           useShouldOverrideUrlLoading: true,
                         ),
                         android: AndroidInAppWebViewOptions(
                             supportMultipleWindows: true, thirdPartyCookiesEnabled: true, useHybridComposition: true),
-                        ios: IOSInAppWebViewOptions(disallowOverScroll: true)),
+                        ios: IOSInAppWebViewOptions(
+                          disallowOverScroll: true,
+                          allowsInlineMediaPlayback: true,
+                        )),
                     onWebViewCreated: (InAppWebViewController controller) async {
                       webView = controller;
                       setState(() {});
                       addWebViewHandlers();
 
                       Globals().clearWebViewCache = false;
+                    },
+                    androidOnPermissionRequest:
+                        (InAppWebViewController controller, String origin, List<String> resources) async {
+                      return PermissionRequestResponse(
+                          resources: resources, action: PermissionRequestResponseAction.GRANT);
                     },
                     onConsoleMessage: (InAppWebViewController controller, ConsoleMessage consoleMessage) {
                       print("FreeFlow console: " + consoleMessage.message);
@@ -158,12 +167,19 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   addWebViewHandlers() {
     webView.addJavaScriptHandler(handlerName: "VUE_INITIALIZED", callback: initializedHandler);
+    webView.addJavaScriptHandler(handlerName: "GO_TO_USERNAME_SCREEN", callback: goToStartHandler);
     webView.addJavaScriptHandler(handlerName: "RETRIEVE_IDENTIFIER", callback: retrieveIdentifier);
     print('Added handlers');
   }
 
   Future<void> initializedHandler(List<dynamic> params) async {
     print('RECEIVED VUE_INITIALIZED');
+  }
+
+  Future<void> goToStartHandler(List<dynamic> params) async {
+    print('RECEIVED GO_TO_USERNAME_SCREEN');
+    await Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (BuildContext context) => EnterUsernameScreen()));
   }
 
   Future<String> retrieveIdentifier(List<dynamic> params) async {

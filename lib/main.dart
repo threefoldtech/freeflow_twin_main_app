@@ -33,6 +33,8 @@ void main() async {
 
   FirebaseMessaging.instance.requestPermission();
 
+  await Permission.microphone.request();
+
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'high_importance_channel',
     'High Importance Notifications',
