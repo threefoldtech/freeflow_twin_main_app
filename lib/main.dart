@@ -191,13 +191,14 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (state == AppLifecycleState.paused) {
-      Uri? currentUrl = await webView.getUrl();
+    Uri? currentUrl = await webView.getUrl();
+    String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
+
+    if (state == AppLifecycleState.paused && currentUrl.toString().startsWith(rootUrl)) {
       setState(() {
         lastUrl = currentUrl;
       });
 
-      String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
       Uri newUrl = Uri.parse(rootUrl);
 
       URLRequest r = new URLRequest(url: newUrl);
@@ -205,7 +206,7 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
       await webView.loadUrl(urlRequest: r);
     }
 
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && currentUrl.toString().startsWith(rootUrl)) {
       if (lastUrl != null) {
         URLRequest r = new URLRequest(url: lastUrl);
 
