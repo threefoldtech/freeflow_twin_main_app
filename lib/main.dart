@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:freeflow/app_config.dart';
 import 'package:freeflow/classes/notifications.dart';
 import 'package:freeflow/globals/globals.dart';
@@ -91,48 +92,60 @@ void main() async {
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
-  NotificationController.createNewNotification(message.data['sender']);
+  await Firebase.initializeApp();
 
+
+  final res = await AwesomeNotifications().createNotification(
+    content: NotificationContent(
+      id: Random().nextInt(1000000),
+      channelKey: 'channel_name',
+      title: 'Hello!',
+      body: 'World!',
+      notificationLayout: NotificationLayout.Default,
+    ),
+  );
+
+  // print("Handling a background message: ${message.messageId}");
+  // NotificationController.createNewNotification(message.data['sender']);
 }
 
-// When the app is in the foreground
-Future<void> foregroundClick(NotificationResponse message) async {
-  print('Foreground notification clicked');
-
-  String username = await getNameInStorage();
-
-  String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
-
-  dynamic target = jsonDecode(message.payload!)['sender'];
-
-  String messageUrl = rootUrl + '/whisper/$target';
-  Uri newUrl = Uri.parse(messageUrl);
-
-  URLRequest r = new URLRequest(url: newUrl);
-
-  await webView.loadUrl(urlRequest: r);
-}
-
-// When the app is in the background
-Future<void> backgroundClick(NotificationResponse message) async {
-  print('Background notification clicked');
-
-  new Future.delayed(const Duration(milliseconds: 500), () async {
-    String username = await getNameInStorage();
-
-    String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
-
-    dynamic target = jsonDecode(message.payload!)['sender'];
-
-    String messageUrl = rootUrl + '/whisper/$target';
-    Uri newUrl = Uri.parse(messageUrl);
-
-    URLRequest r = new URLRequest(url: newUrl);
-
-    await webView.loadUrl(urlRequest: r);
-  });
-}
+// // When the app is in the foreground
+// Future<void> foregroundClick(NotificationResponse message) async {
+//   print('Foreground notification clicked');
+//
+//   String username = await getNameInStorage();
+//
+//   String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
+//
+//   dynamic target = jsonDecode(message.payload!)['sender'];
+//
+//   String messageUrl = rootUrl + '/whisper/$target';
+//   Uri newUrl = Uri.parse(messageUrl);
+//
+//   URLRequest r = new URLRequest(url: newUrl);
+//
+//   await webView.loadUrl(urlRequest: r);
+// }
+//
+// // When the app is in the background
+// Future<void> backgroundClick(NotificationResponse message) async {
+//   print('Background notification clicked');
+//
+//   new Future.delayed(const Duration(milliseconds: 500), () async {
+//     String username = await getNameInStorage();
+//
+//     String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
+//
+//     dynamic target = jsonDecode(message.payload!)['sender'];
+//
+//     String messageUrl = rootUrl + '/whisper/$target';
+//     Uri newUrl = Uri.parse(messageUrl);
+//
+//     URLRequest r = new URLRequest(url: newUrl);
+//
+//     await webView.loadUrl(urlRequest: r);
+//   });
+// }
 
 class LandingScreen extends StatefulWidget {
   @override
