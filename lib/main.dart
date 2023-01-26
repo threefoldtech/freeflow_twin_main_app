@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:freeflow/app_config.dart';
+import 'package:freeflow/classes/notifications.dart';
 import 'package:freeflow/globals/globals.dart';
 import 'package:freeflow/helpers/shared_preference_data.dart';
 import 'package:freeflow/screens/webview_screen.dart';
@@ -19,55 +20,21 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await NotificationController.initializeLocalNotifications();
+  NotificationController.startListeningNotificationEvents();
+
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  await Permission.microphone.request();
+  FirebaseMessaging.instance.requestPermission();
   await Permission.notification.isDenied.then((value) {
     if (value) {
       Permission.notification.request();
     }
   });
-
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-  FirebaseMessaging.instance.requestPermission();
-
-  await Permission.microphone.request();
-
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'high_importance_channel',
-    'High Importance Notifications',
-    importance: Importance.max,
-  );
-
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@drawable/ic_launcher_notification');
-
-  const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(
-    requestAlertPermission: true,
-    requestBadgePermission: true,
-    requestSoundPermission: true,
-  );
-
-  final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
-
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-      onDidReceiveNotificationResponse: foregroundClick, onDidReceiveBackgroundNotificationResponse: backgroundClick);
-
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
-
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-
 
   // When the app is terminated
   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
@@ -100,21 +67,7 @@ void main() async {
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
     if (notification != null && android != null) {
-      flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              channel.id,
-              channel.name,
-              channelDescription: channel.description,
-              playSound: true,
-              // icon: '@drawable/ic_launcher_notification',
-              // styleInformation:
-            ),
-          ),
-          payload: jsonEncode(message.data));
+      NotificationController.createNewNotification(notification.title!);
     }
   });
 
@@ -139,6 +92,8 @@ void main() async {
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
+  NotificationController.createNewNotification(message.data['sender']);
+
 }
 
 // When the app is in the foreground
@@ -193,28 +148,31 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    Uri? currentUrl = await webView.getUrl();
-    String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
-
-    if (state == AppLifecycleState.paused && currentUrl.toString().startsWith(rootUrl)) {
-      setState(() {
-        lastUrl = currentUrl;
-      });
-
-      Uri newUrl = Uri.parse(rootUrl);
-
-      URLRequest r = new URLRequest(url: newUrl);
-
-      await webView.loadUrl(urlRequest: r);
-    }
-
-    if (state == AppLifecycleState.resumed && currentUrl.toString().startsWith(rootUrl)) {
-      if (lastUrl != null) {
-        URLRequest r = new URLRequest(url: lastUrl);
-
-        await webView.loadUrl(urlRequest: r);
-      }
-    }
+    print("APP LIFE CYCLE STATE DID CHANGE");
+    print(state);
+    //
+    // Uri? currentUrl = await webView.getUrl();
+    // String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
+    //
+    // if (state == AppLifecycleState.paused && currentUrl.toString().startsWith(rootUrl)) {
+    //   setState(() {
+    //     lastUrl = currentUrl;
+    //   });
+    //
+    //   Uri newUrl = Uri.parse(rootUrl);
+    //
+    //   URLRequest r = new URLRequest(url: newUrl);
+    //
+    //   await webView.loadUrl(urlRequest: r);
+    // }
+    //
+    // if (state == AppLifecycleState.resumed && currentUrl.toString().startsWith(rootUrl)) {
+    //   if (lastUrl != null) {
+    //     URLRequest r = new URLRequest(url: lastUrl);
+    //
+    //     await webView.loadUrl(urlRequest: r);
+    //   }
+    // }
   }
 
   @override
@@ -229,7 +187,7 @@ class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserv
 
   @override
   void dispose() {
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
