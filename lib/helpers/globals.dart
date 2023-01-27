@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:freeflow/helpers/hex_color.dart';
 
 class NoAnimationTabController extends TabController {
@@ -22,6 +23,9 @@ class Globals {
 
   String routeName = 'Home';
   bool clearWebViewCache = false;
+
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  Map<String, List<int>> notificationHashes = {};
 
   ValueNotifier<bool> hidePhoneButton = ValueNotifier(false);
 
