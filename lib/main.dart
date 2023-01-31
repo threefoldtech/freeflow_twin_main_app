@@ -1,9 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:freeflow/app_config.dart';
 import 'package:freeflow/classes/notification.dart';
-import 'package:freeflow/globals/globals.dart';
 import 'package:freeflow/helpers/shared_preference_data.dart';
 import 'package:freeflow/screens/webview_screen.dart';
 import 'helpers/api_helpers.dart';
@@ -42,50 +40,15 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen> with WidgetsBindingObserver {
   String username = '';
 
-  AppLifecycleState? _notification;
-
   Uri? lastUrl;
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    Uri? currentUrl = await webView.getUrl();
-    String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
-
-    if (state == AppLifecycleState.paused && currentUrl.toString().startsWith(rootUrl)) {
-      setState(() {
-        lastUrl = currentUrl;
-      });
-
-      Uri newUrl = Uri.parse(rootUrl);
-
-      URLRequest r = new URLRequest(url: newUrl);
-
-      await webView.loadUrl(urlRequest: r);
-    }
-
-    if (state == AppLifecycleState.resumed && currentUrl.toString().startsWith(rootUrl)) {
-      if (lastUrl != null) {
-        URLRequest r = new URLRequest(url: lastUrl);
-
-        await webView.loadUrl(urlRequest: r);
-      }
-    }
-  }
 
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getUsername();
     });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance?.removeObserver(this);
-    super.dispose();
   }
 
   Future<void> getUsername() async {

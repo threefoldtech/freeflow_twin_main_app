@@ -25,7 +25,6 @@ class Globals {
   bool clearWebViewCache = false;
 
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-  Map<String, List<int>> notificationHashes = {};
 
   ValueNotifier<bool> hidePhoneButton = ValueNotifier(false);
 

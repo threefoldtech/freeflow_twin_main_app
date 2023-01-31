@@ -73,21 +73,12 @@ class NotificationController {
 
       if (message?.data == null) return;
 
-      String from = message?.data['sender'];
-
-      if (Globals().notificationHashes.containsKey(from)) {
-        Globals().notificationHashes[from] = [];
-      }
-
       new Future.delayed(const Duration(milliseconds: 500), () async {
         String username = await getNameInStorage();
 
         String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
 
-        print('This is the target: ');
-        print(from);
-
-        String messageUrl = rootUrl + '/whisper/$from';
+        String messageUrl = rootUrl + '/whisper';
         Uri newUrl = Uri.parse(messageUrl);
 
         URLRequest r = new URLRequest(url: newUrl);
@@ -96,27 +87,15 @@ class NotificationController {
         print(messageUrl);
 
         await webView.loadUrl(urlRequest: r);
-
-        print(Globals().notificationHashes);
       });
     });
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      print("COMING HERE");
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
       if (notification != null && android != null) {
-        if (!Globals().notificationHashes.containsKey(notification.title)) {
-          Globals().notificationHashes[notification.title!] = [];
-        }
-
-        Globals().notificationHashes[notification.title]?.add(hashCode);
-
-        print('THIS IS THE HASHCODE');
-        print(notification.hashCode);
-
         Globals().flutterLocalNotificationsPlugin.show(
             notification.hashCode,
             notification.title,
@@ -133,8 +112,6 @@ class NotificationController {
             ),
             payload: jsonEncode(message.data));
       }
-
-      print(Globals().notificationHashes);
     });
   }
 }
@@ -143,58 +120,35 @@ class NotificationController {
 Future<void> foregroundClick(NotificationResponse message) async {
   print('Foreground notification clicked');
 
-  dynamic from = jsonDecode(message.payload!)['sender'];
-
-  if (Globals().notificationHashes.containsKey(from)) {
-    List<int>? allHashes = Globals().notificationHashes[from];
-
-    allHashes?.forEach((hash) {
-      print("REMOVING HASH");
-      print(hash);
-      Globals().flutterLocalNotificationsPlugin.cancel(hash);
-    });
-
-    Globals().notificationHashes[from] = [];
-  }
 
   String username = await getNameInStorage();
 
   String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
 
-  String messageUrl = rootUrl + '/whisper/$from';
+  String messageUrl = rootUrl + '/whisper';
   Uri newUrl = Uri.parse(messageUrl);
 
   URLRequest r = new URLRequest(url: newUrl);
 
   await webView.loadUrl(urlRequest: r);
-
-  print(Globals().notificationHashes);
 }
 
 // When the app is in the background
 Future<void> backgroundClick(NotificationResponse message) async {
   print('Background notification clicked');
 
-  dynamic from = jsonDecode(message.payload!)['sender'];
-
-  if (Globals().notificationHashes.containsKey(from)) {
-    Globals().notificationHashes[from] = [];
-  }
-
   new Future.delayed(const Duration(milliseconds: 500), () async {
     String username = await getNameInStorage();
 
     String rootUrl = 'https://' + username + AppConfig().freeFlowUrl();
 
-    String messageUrl = rootUrl + '/whisper/$from';
+    String messageUrl = rootUrl + '/whisper';
     Uri newUrl = Uri.parse(messageUrl);
 
     URLRequest r = new URLRequest(url: newUrl);
 
     await webView.loadUrl(urlRequest: r);
   });
-
-  print(Globals().notificationHashes);
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
